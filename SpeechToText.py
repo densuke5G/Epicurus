@@ -2,11 +2,16 @@ from __future__ import division
 import os
 import re
 import sys
+import openai
 from google.cloud import speech
 import pyaudio
 from six.moves import queue
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'my-project-python-391712-78b284cc1d7b.json'
+
+openai.organization = "org-YUPK4NI7XPStw9x9n6GAxRpe"
+openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.Model.list()
 
 # Audio recording parameters
 RATE = 16000
@@ -137,6 +142,8 @@ def main():
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = "ja-JP"  # a BCP-47 language tag
+
+    print("音声認識を開始します")
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
