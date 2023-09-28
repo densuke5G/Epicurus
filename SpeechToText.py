@@ -11,8 +11,8 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'my-project-python-391712-78b284c
 
 openai.organization = "org-YUPK4NI7XPStw9x9n6GAxRpe"
 openai.api_key = os.getenv("OPENAI_API_KEY")
-openai.Model.list()
 
+# ============ SPEECH TO TEXT=======================================================================================================
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
@@ -43,7 +43,6 @@ class MicrophoneStream(object):
             # overflow while the calling thread makes network requests, etc.
             stream_callback=self._fill_buffer,
         )
-
         self.closed = False
 
         return self
@@ -138,12 +137,17 @@ def listen_print_loop(responses):
 
             num_chars_printed = 0
 
+# ============ SPEECH TO TEXT END ==================================================================================================
+# ============== CHAT GPT START ====================================================================================================
+
+# def chat_conpletion()
+
+# ============== CHAT GPT END ======================================================================================================
 def main():
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = "ja-JP"  # a BCP-47 language tag
 
-    print("音声認識を開始します")
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
@@ -156,6 +160,8 @@ def main():
         config=config, interim_results=True
     )
 
+    print("音声認識を開始します")
+    
     with MicrophoneStream(RATE, CHUNK) as stream:
         audio_generator = stream.generator()
         requests = (
