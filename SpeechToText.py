@@ -10,7 +10,7 @@ from six.moves import queue
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'my-project-python-391712-78b284cc1d7b.json'
 
 openai.organization = "org-YUPK4NI7XPStw9x9n6GAxRpe"
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # ============ SPEECH TO TEXT=======================================================================================================
 # Audio recording parameters
@@ -129,6 +129,10 @@ def listen_print_loop(responses):
         else:
             print(transcript + overwrite_chars)
 
+            if re.search(r"\b(送信|submit)\b", transcript, re.I):
+                print("chatgptへ送信")
+                return transcript
+
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
             if re.search(r"\b(exit|quit)\b", transcript, re.I):
@@ -139,8 +143,36 @@ def listen_print_loop(responses):
 
 # ============ SPEECH TO TEXT END ==================================================================================================
 # ============== CHAT GPT START ====================================================================================================
+settings_text = "You are a helpful assistant."
+past_messsages = []
 
-# def chat_conpletion()
+def chat_completion(new_message_text:str, settings_text:str = '', past_messages:list = []):
+    """
+    This function generates a response message using OpenAI's GPT-3 model by taking in a new message text, 
+    optional settings text and a list of past messages as inputs.
+
+    Args:
+    new_message_text (str): The new message text which the model will use to generate a response message.
+    settings_text (str, optional): The optional settings text that will be added as a system message to the past_messages list. Defaults to ''.
+    past_messages (list, optional): The optional list of past messages that the model will use to generate a response message. Defaults to [].
+
+    Returns:
+    tuple: A tuple containing the response message text and the updated list of past messages after appending the new and response messages.
+    """
+    if len(past_messages) == 0 and len(settings_text) != 0:
+        system = {"role": "system", "content": settings_text}
+        past_messages.append(system)
+    new_message = {"role": "user", "content": new_message_text}
+    past_messages.append(new_message)
+
+    result = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=past_messages
+    )
+    response_message = {"role": "assistant", "content": result.choices[0].message.content}
+    past_messages.append(response_message)
+    response_message_text = result.choices[0].message.content
+    return response_message_text, past_messages
 
 # ============== CHAT GPT END ======================================================================================================
 def main():
@@ -172,7 +204,10 @@ def main():
         responses = client.streaming_recognize(streaming_config, requests)
 
         # Now, put the transcription responses to use.
-        listen_print_loop(responses)
+        new_message_text = listen_print_loop(responses)
+
+    GPT_answer = chat_completion(new_message_text, settings_text, [])
+    print(GPT_answer)
 
 if __name__ == "__main__":
     main()
