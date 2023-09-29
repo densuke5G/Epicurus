@@ -99,6 +99,8 @@ def listen_print_loop(responses):
     final one, print a newline to preserve the finalized transcription.
     """
     num_chars_printed = 0
+    transcript_sentence = []
+
     for response in responses:
         if not response.results:
             continue
@@ -128,10 +130,14 @@ def listen_print_loop(responses):
 
         else:
             print(transcript + overwrite_chars)
+            transcript_sentence.append(transcript)
 
             if re.search(r"\b(送信|submit)\b", transcript, re.I):
                 print("chatgptへ送信")
-                return transcript
+
+                del transcript_sentence[-1]
+                str = (" ").join(transcript_sentence)
+                return str
 
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
