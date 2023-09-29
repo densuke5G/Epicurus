@@ -134,7 +134,8 @@ def listen_print_loop(responses):
 
             if re.search(r"\b(送信|submit)\b", transcript, re.I):
                 print("chatgptへ送信")
-
+                
+                #リストを文字列に変換し、送り値にする
                 del transcript_sentence[-1]
                 str = (" ").join(transcript_sentence)
                 return str
@@ -178,7 +179,7 @@ def chat_completion(new_message_text:str, settings_text:str = '', past_messages:
     response_message = {"role": "assistant", "content": result.choices[0].message.content}
     past_messages.append(response_message)
     response_message_text = result.choices[0].message.content
-    return response_message_text, past_messages
+    return response_message_text
 
 # ============== CHAT GPT END ======================================================================================================
 def main():
@@ -200,20 +201,25 @@ def main():
 
     print("音声認識を開始します")
     
-    with MicrophoneStream(RATE, CHUNK) as stream:
-        audio_generator = stream.generator()
-        requests = (
-            speech.StreamingRecognizeRequest(audio_content=content)
-            for content in audio_generator
-        )
+    while True:
+        with MicrophoneStream(RATE, CHUNK) as stream:
+            audio_generator = stream.generator()
+            requests = (
+                speech.StreamingRecognizeRequest(audio_content=content)
+                for content in audio_generator
+            )
 
-        responses = client.streaming_recognize(streaming_config, requests)
+            responses = client.streaming_recognize(streaming_config, requests)
 
-        # Now, put the transcription responses to use.
-        new_message_text = listen_print_loop(responses)
+            # Now, put the transcription responses to use.
+            new_message_text = listen_print_loop(responses)
 
-    GPT_answer = chat_completion(new_message_text, settings_text, [])
-    print(GPT_answer)
+        GPT_answer = chat_completion(new_message_text, settings_text, [])
+        print(GPT_answer)
+
+        #送信内容に別れの挨拶がある場合終了
+        if re.search(r"\b(バイバイ|さよなら)\b", new_message_text, re.I):
+                break
 
 if __name__ == "__main__":
     main()
