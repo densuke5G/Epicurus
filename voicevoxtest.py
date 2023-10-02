@@ -1,7 +1,11 @@
 import requests
 import json
 import pyaudio
+# Pythonで外部ファイルを実行したいができない…
+# import subprocess
 
+# exe_file = (r'C:¥Users¥danie¥Documents¥Project Epicurus¥voicevox_engine-windows-nvidia-0.14.5¥windows-nvidia¥run.exe')
+# subprocess.run((exe_file))
 
 def vvox_test(text):
     # エンジン起動時に表示されているIP、portを指定
