@@ -5,6 +5,8 @@ import sys
 import openai
 from google.cloud import speech
 import pyaudio
+import requests
+import json
 from six.moves import queue
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'my-project-python-391712-78b284cc1d7b.json'
@@ -150,7 +152,10 @@ def listen_print_loop(responses):
 
 # ============ SPEECH TO TEXT END ==================================================================================================
 # ============== CHAT GPT START ====================================================================================================
-settings_text = "You are a helpful assistant."
+f = open('GPTsetting.txt', 'r', encoding='UTF-8')
+settings_text = f.read()
+f.close
+
 past_messsages = []
 
 def chat_completion(new_message_text:str, settings_text:str = '', past_messages:list = []):
@@ -182,6 +187,49 @@ def chat_completion(new_message_text:str, settings_text:str = '', past_messages:
     return response_message_text
 
 # ============== CHAT GPT END ======================================================================================================
+# ============== VOICEVOX START ======================================================================================================
+
+def vvox_test(text):
+    # エンジン起動時に表示されているIP、portを指定
+    host = "127.0.0.1"
+    port = 50021
+    
+    # 音声化する文言と話者を指定(3で標準ずんだもんになる)
+    params = (
+        ('text', text),
+        ('speaker', 3),
+    )
+    
+    # 音声合成用のクエリ作成
+    query = requests.post(
+        f'http://{host}:{port}/audio_query',
+        params=params
+    )
+    
+    # 音声合成を実施
+    synthesis = requests.post(
+        f'http://{host}:{port}/synthesis',
+        headers = {"Content-Type": "application/json"},
+        params = params,
+        data = json.dumps(query.json())
+    )
+    
+    # 再生処理
+    voice = synthesis.content
+    pya = pyaudio.PyAudio()
+    
+    stream = pya.open(format=pyaudio.paInt16,
+                      channels=1,
+                      rate=24000,
+                      output=True)
+    
+    stream.write(voice)
+    stream.stop_stream()
+    stream.close()
+    pya.terminate()
+
+    # ============== VOICEVOX END ======================================================================================================
+
 def main():
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
@@ -214,8 +262,10 @@ def main():
             # Now, put the transcription responses to use.
             new_message_text = listen_print_loop(responses)
 
-        GPT_answer = chat_completion(new_message_text, settings_text, [])
+        GPT_answer = chat_completion(new_message_text, settings_text, past_messsages)
         print(GPT_answer)
+
+        vvox_test(GPT_answer)
 
         #送信内容に別れの挨拶がある場合終了
         if re.search(r"\b(バイバイ|さよなら)\b", new_message_text, re.I):
